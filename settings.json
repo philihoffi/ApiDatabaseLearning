@@ -1,0 +1,9 @@
+{
+  "database": {
+    "host":"192.168.178.37",
+    "port":"5432",
+    "database":"News",
+    "user":"pi4",
+    "password":"password"
+  }
+}
