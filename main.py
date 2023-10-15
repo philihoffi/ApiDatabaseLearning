@@ -1,8 +1,26 @@
 from datetime import datetime
 
+import os
+
+try:
+    import requests
+except ImportError:
+    os.system('python -m pip install requests')
 import requests
+
+try:
+    import psycopg2
+except ImportError:
+    os.system('python -m pip install psycopg2')
 import psycopg2
+
+try:
+    import json
+except ImportError:
+    os.system('python -m pip install json')
 import json
+
+
 
 # log filerun in log file which appends the current date and time
 
