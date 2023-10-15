@@ -83,10 +83,25 @@ for news in allNews.values():
         cursor.execute(insertQuery, (tag['tag'].lower(),))
         conn.commit()
         counter += 1
-
 write_log.write("New Tags: " + str(counter) + "\n")
+
+#insert new Types
+SelectQuery = "select * from \"Types\";"
+cursor.execute(SelectQuery)
+typesInDataBase = [tupel[0] for tupel in cursor.fetchall()]
+
+counter = 0
+insertQuery = "INSERT INTO \"Types\" (\"name\") VALUES (%s) ON CONFLICT DO NOTHING;"
+for news in allNews.values():
+    if news['type'].lower() in typesInDataBase:
+        continue
+    cursor.execute(insertQuery, (news['type'].lower(),))
+    conn.commit()
+    counter += 1
+write_log.write("New Types: " + str(counter) + "\n")
+
+
 
 conn.close()
 
 write_log.write("end:" + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "\tNews:" + str(len(allNews)) + "\n")
-print(len(allNews))
