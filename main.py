@@ -76,6 +76,8 @@ while api_url != None:
     except KeyError:
         break
 
+print("start inserting")
+
 # insert new Tags
 SelectQuery = "select * from \"Tags\";"
 cursor.execute(SelectQuery)
@@ -115,25 +117,31 @@ insertQuery = """
 
 counter = 0
 
+#shuffle all news
+allNews = dict(sorted(allNews.items(), key=lambda item: item[1]['date'], reverse=True))
+
 for news in allNews.values():
-    sophoraId = news['sophoraId']
-    externalId = news['externalId']
-    title = news['title']
-    date = news['date']
-    updateCheckUrl = news['updateCheckUrl']
-    updateCheckUrlJSON = requests.get(news['updateCheckUrl']).text
-    breakingNews = str(news['breakingNews'])
-    topline = news['topline']
-    details = news['details']
-    detailsJSON = requests.get(news['details']).text
-    detailsweb = news['detailsweb']
-    detailswebPage = requests.get(news['detailsweb']).text
-    shareURL = news['shareURL']
-    shareURLPage = requests.get(news['shareURL']).text
-    type = news['type'].lower()
+    try:
+        sophoraId = news['sophoraId']
+        externalId = news['externalId']
+        title = news['title']
+        date = news['date']
+        updateCheckUrl = news['updateCheckUrl']
+        updateCheckUrlJSON = requests.get(news['updateCheckUrl']).text
+        breakingNews = str(news['breakingNews'])
+        topline = news['topline']
+        details = news['details']
+        detailsJSON = requests.get(news['details']).text
+        detailsweb = news['detailsweb']
+        detailswebPage = requests.get(news['detailsweb']).text
+        shareURL = news['shareURL']
+        shareURLPage = requests.get(news['shareURL']).text
+        type = news['type'].lower()
 
-    cursor.execute(insertQuery, (sophoraId, externalId, title, date, updateCheckUrl, updateCheckUrlJSON, breakingNews,topline, details, detailsJSON, detailsweb, detailswebPage, shareURL, shareURLPage, type))
-
+        cursor.execute(insertQuery, (sophoraId, externalId, title, date, updateCheckUrl, updateCheckUrlJSON, breakingNews,topline, details, detailsJSON, detailsweb, detailswebPage, shareURL, shareURLPage, type))
+    except Exception as e:
+        print(e)
+        write_log.write("ERROR:\t"+str(e) + "\n")
 
     conn.commit()
     counter += 1
