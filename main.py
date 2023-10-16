@@ -20,8 +20,6 @@ except ImportError:
     os.system('python -m pip install json')
 import json
 
-
-
 # log filerun in log file which appends the current date and time
 
 write_log = open("log.txt", "a")
@@ -48,6 +46,10 @@ api_url = 'https://www.tagesschau.de/api2/news/'
 
 allNews = {}
 
+SelectQuery = "select \"sophoraId\" from \"News\";"
+cursor.execute(SelectQuery)
+newsInDatabase = [tupel[0] for tupel in cursor.fetchall()]
+
 while api_url != None:
     print(f"Request {api_url}")
 
@@ -59,7 +61,12 @@ while api_url != None:
         data = response.json()  # Die Antwort als JSON interpretieren
 
         for news in data['news']:
+            if news.get('type') == 'video':
+                continue
+            if news['sophoraId'] in newsInDatabase:
+                continue
             allNews[news['sophoraId']] = news
+
     else:
         print(f"Fehler: {response.status_code}")
         break
@@ -69,7 +76,7 @@ while api_url != None:
     except KeyError:
         break
 
-#insert new Tags
+# insert new Tags
 SelectQuery = "select * from \"Tags\";"
 cursor.execute(SelectQuery)
 tagsInDataBase = [tupel[0] for tupel in cursor.fetchall()]
@@ -85,7 +92,7 @@ for news in allNews.values():
         counter += 1
 write_log.write("New Tags: " + str(counter) + "\n")
 
-#insert new Types
+# insert new Types
 SelectQuery = "select * from \"Types\";"
 cursor.execute(SelectQuery)
 typesInDataBase = [tupel[0] for tupel in cursor.fetchall()]
@@ -96,9 +103,44 @@ for news in allNews.values():
     if news['type'].lower() in typesInDataBase:
         continue
     cursor.execute(insertQuery, (news['type'].lower(),))
-    conn.commit()
     counter += 1
 write_log.write("New Types: " + str(counter) + "\n")
+
+# Insert new News
+insertQuery = """
+    INSERT INTO "News"("sophoraId", "externalId", "title", date, "updateCheckUrl", "updateCheckUrlJSON", "breakingNews","topline", "details", "detailsJSON", "detailsweb", "detailswebPage", "shareURL", "shareURLPage", "fk_Type")
+    VALUES (%s, %s, %s, %s, %s,%s, %s, %s, %s, %s,%s, %s, %s, %s, %s)
+    ON CONFLICT DO NOTHING;
+"""
+
+counter = 0
+
+for news in allNews.values():
+    sophoraId = news['sophoraId']
+    externalId = news['externalId']
+    title = news['title']
+    date = news['date']
+    updateCheckUrl = news['updateCheckUrl']
+    updateCheckUrlJSON = requests.get(news['updateCheckUrl']).text
+    breakingNews = str(news['breakingNews'])
+    topline = news['topline']
+    details = news['details']
+    detailsJSON = requests.get(news['details']).text
+    detailsweb = news['detailsweb']
+    detailswebPage = requests.get(news['detailsweb']).text
+    shareURL = news['shareURL']
+    shareURLPage = requests.get(news['shareURL']).text
+    type = news['type'].lower()
+
+    cursor.execute(insertQuery, (sophoraId, externalId, title, date, updateCheckUrl, updateCheckUrlJSON, breakingNews,topline, details, detailsJSON, detailsweb, detailswebPage, shareURL, shareURLPage, type))
+
+
+    conn.commit()
+    counter += 1
+
+write_log.write("New News: " + str(counter) + "\n")
+
+
 
 
 

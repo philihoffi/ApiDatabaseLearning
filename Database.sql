@@ -2,89 +2,56 @@
 -- Please log an issue at https://redmine.postgresql.org/projects/pgadmin4/issues/new if you find any bugs, including reproduction steps.
 BEGIN;
 
-
-CREATE TABLE IF NOT EXISTS public."News"
+CREATE TABLE IF NOT EXISTS public."Types"
 (
-    "sophoraId" text NOT NULL,
-    "externalId" text NOT NULL,
-    title text NOT NULL,
-    date date NOT NULL,
-    "updateCheckUrl" json NOT NULL,
-    "breakingNews" boolean NOT NULL,
-    topline text NOT NULL,
-    details json NOT NULL,
-    detailsweb text NOT NULL,
-    "shareURL" text NOT NULL,
-    PRIMARY KEY ("sophoraId")
+    name text COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT "Types_pkey" PRIMARY KEY (name)
 );
 
 CREATE TABLE IF NOT EXISTS public."Tags"
 (
-    name text NOT NULL,
-    PRIMARY KEY (name)
-);
-
-CREATE TABLE IF NOT EXISTS public."Tags_News"
-(
-    "Tags_name" text NOT NULL,
-    "News_sophoraId" text NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS public."Types"
-(
-    name text NOT NULL
+    name text COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT "Tags_pkey" PRIMARY KEY (name)
 );
 
 CREATE TABLE IF NOT EXISTS public."regionIds"
 (
     "ID" bigint NOT NULL,
-    name text NOT NULL,
-    PRIMARY KEY ("ID")
+    name text COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT "regionIds_pkey" PRIMARY KEY ("ID")
 );
 
-CREATE TABLE IF NOT EXISTS public."regionIds_News"
+CREATE TABLE IF NOT EXISTS public."News"
 (
-    "regionIds_ID" bigint NOT NULL,
-    "News_sophoraId" text NOT NULL
+    "sophoraId" text COLLATE pg_catalog."default" NOT NULL,
+    "externalId" text COLLATE pg_catalog."default" NOT NULL,
+    title text COLLATE pg_catalog."default" NOT NULL,
+    date date NOT NULL,
+    "updateCheckUrl" text COLLATE pg_catalog."default" NOT NULL,
+    "breakingNews" boolean NOT NULL,
+    topline text COLLATE pg_catalog."default" NOT NULL,
+    details json NOT NULL,
+    detailsweb text COLLATE pg_catalog."default" NOT NULL,
+    "shareURL" text COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT "News_pkey" PRIMARY KEY ("sophoraId"),
 );
 
-ALTER TABLE IF EXISTS public."Tags_News"
-    ADD FOREIGN KEY ("Tags_name")
-    REFERENCES public."Tags" (name) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
+CREATE TABLE IF NOT EXISTS public."News_Tags"
+(
+    "News_sophoraId" text COLLATE pg_catalog."default" NOT NULL,
+    "Tags_name" text COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT "News_Tags_pkey" PRIMARY KEY ("News_sophoraId", "Tags_name"),
+    FOREIGN KEY ("News_sophoraId") REFERENCES public."News" ("sophoraId") ON UPDATE NO ACTION ON DELETE NO ACTION,
+    FOREIGN KEY ("Tags_name") REFERENCES public."Tags" (name) ON UPDATE NO ACTION ON DELETE NO ACTION
+);
 
-
-ALTER TABLE IF EXISTS public."Tags_News"
-    ADD FOREIGN KEY ("News_sophoraId")
-    REFERENCES public."News" ("sophoraId") MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
-
-
-ALTER TABLE IF EXISTS public."Types"
-    ADD FOREIGN KEY (name)
-    REFERENCES public."News" ("sophoraId") MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
-
-
-ALTER TABLE IF EXISTS public."regionIds_News"
-    ADD FOREIGN KEY ("regionIds_ID")
-    REFERENCES public."regionIds" ("ID") MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
-
-
-ALTER TABLE IF EXISTS public."regionIds_News"
-    ADD FOREIGN KEY ("News_sophoraId")
-    REFERENCES public."News" ("sophoraId") MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
+CREATE TABLE IF NOT EXISTS public."News_regionIds"
+(
+    "News_sophoraId" text COLLATE pg_catalog."default" NOT NULL,
+    "regionIds_ID" bigint NOT NULL,
+    CONSTRAINT "News_regionIds_pkey" PRIMARY KEY ("News_sophoraId", "regionIds_ID"),
+    FOREIGN KEY ("News_sophoraId") REFERENCES public."News" ("sophoraId") ON UPDATE NO ACTION ON DELETE NO ACTION,
+    FOREIGN KEY ("regionIds_ID") REFERENCES public."regionIds" ("ID") ON UPDATE NO ACTION ON DELETE NO ACTION
+);
 
 END;
