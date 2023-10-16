@@ -116,7 +116,7 @@ insertQuery = """
 """
 
 counter = 0
-
+errors = 0
 #shuffle all news
 allNews = dict(sorted(allNews.items(), key=lambda item: item[1]['date'], reverse=True))
 
@@ -141,12 +141,14 @@ for news in allNews.values():
         cursor.execute(insertQuery, (sophoraId, externalId, title, date, updateCheckUrl, updateCheckUrlJSON, breakingNews,topline, details, detailsJSON, detailsweb, detailswebPage, shareURL, shareURLPage, type))
     except Exception as e:
         print(e)
+        errors += 1
         write_log.write("Error"+str(e) + "\n")
 
     conn.commit()
     counter += 1
 
 write_log.write("New News: " + str(counter) + "\n")
+write_log.write("Errors: " + str(errors) + "\n")
 
 
 
