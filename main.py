@@ -54,8 +54,8 @@ SelectQuery = "select \"externalId\" from \"News\";"
 cursor.execute(SelectQuery)
 newsInDatabaseExter = [tupel[0] for tupel in cursor.fetchall()]
 
-counter = 0
 
+counter = 0
 while api_url != None:
     print(f"Request {api_url}")
 
@@ -70,9 +70,11 @@ while api_url != None:
             if news.get('type') == 'video':
                 continue
             if news['sophoraId'] in newsInDatabaseSopho and news['externalId'] in newsInDatabaseExter:
-                counter += 1
                 continue
             allNews[news['sophoraId']] = news
+            counter += 1
+            if counter > 10:
+                break
 
     else:
         print(f"Fehler: {response.status_code}")
@@ -83,7 +85,6 @@ while api_url != None:
     except KeyError:
         break
 
-print(counter)
 print("start inserting")
 
 # insert new Tags
@@ -125,8 +126,6 @@ insertQuery = """
 
 counter = 0
 errors = 0
-#shuffle all news
-allNews = dict(sorted(allNews.items(), key=lambda item: item[1]['date'], reverse=True))
 
 for news in allNews.values():
     try:
@@ -158,7 +157,20 @@ for news in allNews.values():
 write_log.write("New News: " + str(counter) + "\n")
 write_log.write("Errors: " + str(errors) + "\n")
 
+# Insert new TagsToNews
+SelectQuery = "select * from \"Tags_News\";"
+cursor.execute(SelectQuery)
+tagsToNewsInDataBase = [tupel[0] for tupel in cursor.fetchall()]
 
+counter = 0
+insertQuery = "INSERT INTO \"Tags_News\" (\"Tags_name\", \"News_sophoraId\") VALUES (%s, %s) ON CONFLICT DO NOTHING;"
+for news in allNews.values():
+    for tag in news['tags']:
+        if tag['tag'].lower() in tagsToNewsInDataBase:
+            continue
+        cursor.execute(insertQuery, (tag['tag'].lower(), news['sophoraId']))
+        conn.commit()
+        counter += 1
 
 
 
