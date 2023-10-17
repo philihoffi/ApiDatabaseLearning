@@ -73,7 +73,7 @@ while api_url != None:
                 continue
             allNews[news['sophoraId']] = news
             counter += 1
-            if counter > 10:
+            if counter > 200:
                 break
 
     else:
