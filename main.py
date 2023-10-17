@@ -48,7 +48,13 @@ allNews = {}
 
 SelectQuery = "select \"sophoraId\" from \"News\";"
 cursor.execute(SelectQuery)
-newsInDatabase = [tupel[0] for tupel in cursor.fetchall()]
+newsInDatabaseSopho = [tupel[0] for tupel in cursor.fetchall()]
+
+SelectQuery = "select \"externalId\" from \"News\";"
+cursor.execute(SelectQuery)
+newsInDatabaseExter = [tupel[0] for tupel in cursor.fetchall()]
+
+counter = 0
 
 while api_url != None:
     print(f"Request {api_url}")
@@ -63,7 +69,8 @@ while api_url != None:
         for news in data['news']:
             if news.get('type') == 'video':
                 continue
-            if news['sophoraId'] in newsInDatabase:
+            if news['sophoraId'] in newsInDatabaseSopho and news['externalId'] in newsInDatabaseExter:
+                counter += 1
                 continue
             allNews[news['sophoraId']] = news
 
@@ -76,6 +83,7 @@ while api_url != None:
     except KeyError:
         break
 
+print(counter)
 print("start inserting")
 
 # insert new Tags
