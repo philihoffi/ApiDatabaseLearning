@@ -45,11 +45,10 @@ for relationship in relationships:
     G.add_edge(tag, news_sophora_id)  # Connect the tag to the News_sophoraId
 
 # Enlarge the plot size
-plt.figure(figsize=(60, 60))
+plt.figure(figsize=(42, 18))
 
 # Spring layout for positioning nodes
-pos = nx.spring_layout(G, k=0.5, iterations=1000)
-
+pos = nx.spring_layout(G, k=1, iterations=500)
 # Draw the graph without edges, only showing tag nodes without News_sophoraId nodes
 node_labels = {node: '' if node in news_nodes else node for node in G.nodes()}
 nx.draw(G, pos, nodelist=[node for node in G.nodes() if node not in news_nodes], edgelist=[], labels=node_labels, with_labels=True)
