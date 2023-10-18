@@ -168,9 +168,13 @@ for news in allNews.values():
     for tag in news['tags']:
         if tag['tag'].lower() in tagsToNewsInDataBase:
             continue
-        cursor.execute(insertQuery, (tag['tag'].lower(), news['sophoraId']))
-        conn.commit()
-        counter += 1
+        try:
+            cursor.execute(insertQuery, (tag['tag'].lower(), news['sophoraId']))
+            conn.commit()
+            counter += 1
+        except Exception as e:
+            print(e)
+            write_log.write("Error"+str(e) + "\n")
 
 
 
