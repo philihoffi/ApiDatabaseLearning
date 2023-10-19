@@ -56,7 +56,7 @@ for relationship in relationships:
 plt.figure(figsize=(42*4, 18*4))
 
 # Spring layout for positioning nodes
-pos = nx.spring_layout(G, k=1, iterations=2000)
+pos = nx.spring_layout(G, k=2, iterations=2000)
 # Draw the graph without edges, only showing tag nodes without News_sophoraId nodes
 node_labels = {node: '' if node in news_nodes else node for node in G.nodes()}
 nx.draw(G, pos, nodelist=[node for node in G.nodes() if node not in news_nodes], edgelist=[], labels=node_labels, with_labels=True)

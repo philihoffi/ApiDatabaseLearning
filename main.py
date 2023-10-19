@@ -50,8 +50,6 @@ SelectQuery = "select \"sophoraId\" from \"News\";"
 cursor.execute(SelectQuery)
 newsInDatabaseSopho = [tupel[0] for tupel in cursor.fetchall()]
 
-
-counter = 0
 while api_url != None:
     print(f"Request {api_url}")
 
@@ -65,9 +63,10 @@ while api_url != None:
         for news in data['news']:
             if news.get('type') == 'video':
                 continue
+            if news['sophoraId'] in newsInDatabaseSopho:
+                continue
             if news.get('type') != 'video':
                 allNews[news['sophoraId']] = news
-                counter += 1
 
     else:
         print(f"Fehler: {response.status_code}")
@@ -77,8 +76,6 @@ while api_url != None:
         api_url = data['nextPage']
     except KeyError:
         break
-
-    break
 
 print("start inserting")
 
