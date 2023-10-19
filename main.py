@@ -50,10 +50,6 @@ SelectQuery = "select \"sophoraId\" from \"News\";"
 cursor.execute(SelectQuery)
 newsInDatabaseSopho = [tupel[0] for tupel in cursor.fetchall()]
 
-SelectQuery = "select \"externalId\" from \"News\";"
-cursor.execute(SelectQuery)
-newsInDatabaseExter = [tupel[0] for tupel in cursor.fetchall()]
-
 
 counter = 0
 while api_url != None:
@@ -69,12 +65,9 @@ while api_url != None:
         for news in data['news']:
             if news.get('type') == 'video':
                 continue
-            if news['sophoraId'] in newsInDatabaseSopho and news['externalId'] in newsInDatabaseExter:
-                continue
-            allNews[news['sophoraId']] = news
-            counter += 1
-            if counter > 200:
-                break
+            if news.get('type') != 'video':
+                allNews[news['sophoraId']] = news
+                counter += 1
 
     else:
         print(f"Fehler: {response.status_code}")
@@ -85,49 +78,54 @@ while api_url != None:
     except KeyError:
         break
 
+    break
+
 print("start inserting")
 
-# insert new Tags
+# tagsInDataBase
 SelectQuery = "select * from \"Tags\";"
 cursor.execute(SelectQuery)
 tagsInDataBase = [tupel[0] for tupel in cursor.fetchall()]
 
-counter = 0
-insertQuery = "INSERT INTO \"Tags\" (\"name\") VALUES (%s) ON CONFLICT DO NOTHING;"
-for news in allNews.values():
-    for tag in news['tags']:
-        if tag['tag'].lower() in tagsInDataBase:
-            continue
-        cursor.execute(insertQuery, (tag['tag'].lower(),))
-        conn.commit()
-        counter += 1
-write_log.write("New Tags: " + str(counter) + "\n")
-
-# insert new Types
+# typesInDataBase
 SelectQuery = "select * from \"Types\";"
 cursor.execute(SelectQuery)
 typesInDataBase = [tupel[0] for tupel in cursor.fetchall()]
 
+# tagsToNewsInDataBase
+SelectQuery = "select * from \"Tags_News\";"
+cursor.execute(SelectQuery)
+tagsToNewsInDataBase = [tupel[0] for tupel in cursor.fetchall()]
+
 counter = 0
-insertQuery = "INSERT INTO \"Types\" (\"name\") VALUES (%s) ON CONFLICT DO NOTHING;"
-for news in allNews.values():
-    if news['type'].lower() in typesInDataBase:
-        continue
-    cursor.execute(insertQuery, (news['type'].lower(),))
+for currentNews in allNews:
     counter += 1
-write_log.write("New Types: " + str(counter) + "\n")
+    print(f"Inserting {counter} of {len(allNews)} types {currentNews}")
+    news = allNews[currentNews]
+    # insert new Tags
+    insertQuery = "INSERT INTO \"Tags\" (\"name\") VALUES (%s) ON CONFLICT DO NOTHING;"
+    for tag in news['tags']:
+        try:
+            cursor.execute(insertQuery, (tag['tag'].lower(),))
+            conn.commit()
+        except Exception as e:
+            print("ERROR"+str(e))
 
-# Insert new News
-insertQuery = """
-    INSERT INTO "News"("sophoraId", "externalId", "title", date, "updateCheckUrl", "updateCheckUrlJSON", "breakingNews","topline", "details", "detailsJSON", "detailsweb", "detailswebPage", "shareURL", "shareURLPage", "fk_Type")
-    VALUES (%s, %s, %s, %s, %s,%s, %s, %s, %s, %s,%s, %s, %s, %s, %s)
-    ON CONFLICT DO NOTHING;
-"""
+    # insert new Types
+    insertQuery = "INSERT INTO \"Types\" (\"name\") VALUES (%s) ON CONFLICT DO NOTHING;"
+    if news['type'].lower() not in typesInDataBase:
+        try:
+            cursor.execute(insertQuery, (news['type'].lower(),))
+            conn.commit()
+        except Exception as e:
+            print("ERROR"+str(e))
 
-counter = 0
-errors = 0
-
-for news in allNews.values():
+    # Insert new News
+    insertQuery = """
+        INSERT INTO "News"("sophoraId", "externalId", "title", date, "updateCheckUrl", "updateCheckUrlJSON", "breakingNews","topline", "details", "detailsJSON", "detailsweb", "detailswebPage", "shareURL", "shareURLPage", "fk_Type")
+        VALUES (%s, %s, %s, %s, %s,%s, %s, %s, %s, %s,%s, %s, %s, %s, %s)
+        ON CONFLICT DO NOTHING;
+    """
     try:
         sophoraId = news['sophoraId']
         externalId = news['externalId']
@@ -146,38 +144,17 @@ for news in allNews.values():
         type = news['type'].lower()
 
         cursor.execute(insertQuery, (sophoraId, externalId, title, date, updateCheckUrl, updateCheckUrlJSON, breakingNews,topline, details, detailsJSON, detailsweb, detailswebPage, shareURL, shareURLPage, type))
+        conn.commit()
     except Exception as e:
-        print(e)
-        errors += 1
-        write_log.write("Error"+str(e) + "\n")
+        print("ERROR"+str(e))
 
-    conn.commit()
-    counter += 1
-
-write_log.write("New News: " + str(counter) + "\n")
-write_log.write("Errors: " + str(errors) + "\n")
-
-# Insert new TagsToNews
-SelectQuery = "select * from \"Tags_News\";"
-cursor.execute(SelectQuery)
-tagsToNewsInDataBase = [tupel[0] for tupel in cursor.fetchall()]
-
-counter = 0
-insertQuery = "INSERT INTO \"Tags_News\" (\"Tags_name\", \"News_sophoraId\") VALUES (%s, %s) ON CONFLICT DO NOTHING;"
-for news in allNews.values():
+    # Insert new TagsToNews
+    insertQuery = "INSERT INTO \"Tags_News\" (\"Tags_name\", \"News_sophoraId\") VALUES (%s, %s) ON CONFLICT DO NOTHING;"
     for tag in news['tags']:
-        if tag['tag'].lower() in tagsToNewsInDataBase:
-            continue
         try:
             cursor.execute(insertQuery, (tag['tag'].lower(), news['sophoraId']))
             conn.commit()
-            counter += 1
         except Exception as e:
-            print(e)
-            write_log.write("Error"+str(e) + "\n")
+            print("ERROR"+str(e))
 
 
-
-conn.close()
-
-write_log.write("end:" + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "\tNews:" + str(len(allNews)) + "\n")
