@@ -24,7 +24,7 @@ print("Connected to database")
 # Beispiel-Daten: Liste von Beziehungen zwischen N-Teilen und Objekten
 relationships = []
 
-SelectQuery = "SELECT \"Tags_name\",\"News_sophoraId\" from \"Tags_News\";"
+# SelectQuery = "SELECT \"Tags_name\",\"News_sophoraId\" from \"Tags_News\";"
 
 SelectQuery = """SELECT TagCount.Name,"Tags_News"."News_sophoraId"  from (
 SELECT "Tags_name" as Name from "Tags_News"
@@ -52,17 +52,39 @@ for relationship in relationships:
     news_nodes.add(news_sophora_id)  # Add the News_sophoraId node to the set
     G.add_edge(tag, news_sophora_id)  # Connect the tag to the News_sophoraId
 
+
+# Calculate the counts of each node (tag) in relationships
+node_counts = dict()
+for tag, news_sophora_id in relationships:
+    if tag in node_counts:
+        node_counts[tag] += 1
+    else:
+        node_counts[tag] = 1
+
+# Define a minimum node size
+min_node_size = 100  # Adjust this to your desired minimum size
+
+# Define a scaling factor for node sizes
+scaling_factor = 100  # You can adjust this as needed
+
+# Update the size of each node based on counts, ensuring a minimum size
+node_sizes = {node: max(count * scaling_factor, min_node_size) for node, count in node_counts.items()}
+
 # Enlarge the plot size
-plt.figure(figsize=(42*4, 18*4))
+plt.figure(figsize=(21*6, 9*6))
 
 # Spring layout for positioning nodes
-pos = nx.spring_layout(G, k=2, iterations=2000)
-# Draw the graph without edges, only showing tag nodes without News_sophoraId nodes
+pos = nx.spring_layout(G, k=1, iterations=2000)
+
+# Draw the graph with node sizes based on counts, considering the minimum size
+nx.draw(G, pos, nodelist=[node for node in G.nodes() if node not in news_nodes], edgelist=[], with_labels=False, node_size=[node_sizes[node] for node in G.nodes()if node not in news_nodes])
+
+
+# Draw node labels with custom font size, font family, and text positioning
 node_labels = {node: '' if node in news_nodes else node for node in G.nodes()}
-nx.draw(G, pos, nodelist=[node for node in G.nodes() if node not in news_nodes], edgelist=[], labels=node_labels, with_labels=True)
+node_label_positions = nx.get_node_attributes(G, 'pos')
+nx.draw_networkx_labels(G, pos, labels=node_labels, font_size=8, font_family='sans-serif', bbox=dict(facecolor='white', edgecolor='none', boxstyle='round'))
 
 #save the graph
 plt.savefig("graph.png")
-# Display the graph
-# plt.show()
 

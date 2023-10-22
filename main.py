@@ -23,7 +23,8 @@ import json
 # log filerun in log file which appends the current date and time
 
 write_log = open("log.txt", "a")
-write_log.write("\nstart:" + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "\n")
+start_time = datetime.now()
+write_log.write("\nstart:" + start_time.strftime("%d/%m/%Y %H:%M:%S") + "\n")
 
 # read json file
 with open('settings.json') as json_file:
@@ -50,6 +51,7 @@ SelectQuery = "select \"sophoraId\" from \"News\";"
 cursor.execute(SelectQuery)
 newsInDatabaseSopho = [tupel[0] for tupel in cursor.fetchall()]
 
+counter = 0
 while api_url != None:
     print(f"Request {api_url}")
 
@@ -77,6 +79,10 @@ while api_url != None:
     except KeyError:
         break
 
+    counter += 1
+    if counter > 1:
+        break
+
 print("start inserting")
 
 # tagsInDataBase
@@ -94,6 +100,7 @@ SelectQuery = "select * from \"Tags_News\";"
 cursor.execute(SelectQuery)
 tagsToNewsInDataBase = [tupel[0] for tupel in cursor.fetchall()]
 
+write_log.write("Adding " + str(len(allNews)) + " news to database\n")
 counter = 0
 for currentNews in allNews:
     counter += 1
@@ -106,7 +113,8 @@ for currentNews in allNews:
             cursor.execute(insertQuery, (tag['tag'].lower(),))
             conn.commit()
         except Exception as e:
-            print("ERROR"+str(e))
+            print("ERROR" + str(e))
+            write_log.write("ERROR" + str(e) + "\n")
 
     # insert new Types
     insertQuery = "INSERT INTO \"Types\" (\"name\") VALUES (%s) ON CONFLICT DO NOTHING;"
@@ -115,7 +123,8 @@ for currentNews in allNews:
             cursor.execute(insertQuery, (news['type'].lower(),))
             conn.commit()
         except Exception as e:
-            print("ERROR"+str(e))
+            print("ERROR" + str(e))
+            write_log.write("ERROR" + str(e) + "\n")
 
     # Insert new News
     insertQuery = """
@@ -140,10 +149,13 @@ for currentNews in allNews:
         shareURLPage = requests.get(news['shareURL']).text
         type = news['type'].lower()
 
-        cursor.execute(insertQuery, (sophoraId, externalId, title, date, updateCheckUrl, updateCheckUrlJSON, breakingNews,topline, details, detailsJSON, detailsweb, detailswebPage, shareURL, shareURLPage, type))
+        cursor.execute(insertQuery, (
+        sophoraId, externalId, title, date, updateCheckUrl, updateCheckUrlJSON, breakingNews, topline, details,
+        detailsJSON, detailsweb, detailswebPage, shareURL, shareURLPage, type))
         conn.commit()
     except Exception as e:
-        print("ERROR"+str(e))
+        print("ERROR" + str(e))
+        write_log.write("ERROR" + str(e) + "\n")
 
     # Insert new TagsToNews
     insertQuery = "INSERT INTO \"Tags_News\" (\"Tags_name\", \"News_sophoraId\") VALUES (%s, %s) ON CONFLICT DO NOTHING;"
@@ -152,6 +164,7 @@ for currentNews in allNews:
             cursor.execute(insertQuery, (tag['tag'].lower(), news['sophoraId']))
             conn.commit()
         except Exception as e:
-            print("ERROR"+str(e))
+            print("ERROR" + str(e))
+            write_log.write("ERROR" + str(e))
 
-
+write_log.write("finished:" + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "\tRuntime: " + str(datetime.now() - start_time) + "\n")
