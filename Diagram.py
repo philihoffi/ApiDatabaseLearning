@@ -29,7 +29,7 @@ relationships = []
 SelectQuery = """SELECT TagCount.Name,"Tags_News"."News_sophoraId"  from (
 SELECT "Tags_name" as Name from "Tags_News"
 group by "Tags_name"
-having count("News_sophoraId") > 1) as TagCount
+having count("News_sophoraId") > 0) as TagCount
 inner join "Tags_News" on TagCount.Name = "Tags_News"."Tags_name";
 """
 
@@ -71,19 +71,17 @@ scaling_factor = 100  # You can adjust this as needed
 node_sizes = {node: max(count * scaling_factor, min_node_size) for node, count in node_counts.items()}
 
 # Enlarge the plot size
-plt.figure(figsize=(21*6, 9*6))
+plt.figure(figsize=(21*8, 9*8))
 
 # Spring layout for positioning nodes
-pos = nx.spring_layout(G, k=1, iterations=2000)
-
-# Draw the graph with node sizes based on counts, considering the minimum size
-nx.draw(G, pos, nodelist=[node for node in G.nodes() if node not in news_nodes], edgelist=[], with_labels=False, node_size=[node_sizes[node] for node in G.nodes()if node not in news_nodes])
-
+pos = nx.spring_layout(G, k=1, iterations=10000)
 
 # Draw node labels with custom font size, font family, and text positioning
 node_labels = {node: '' if node in news_nodes else node for node in G.nodes()}
 node_label_positions = nx.get_node_attributes(G, 'pos')
-nx.draw_networkx_labels(G, pos, labels=node_labels, font_size=8, font_family='sans-serif', bbox=dict(facecolor='white', edgecolor='none', boxstyle='round'))
+nx.draw_networkx_labels(G, pos, labels=node_labels, font_size=8, font_family='sans-serif')
+
+nx.draw_networkx_nodes(G, pos, nodelist=[node for node in G.nodes() if node not in news_nodes], node_color='r', node_size=[node_sizes[node] for node in G.nodes()if node not in news_nodes], alpha=0.8)
 
 #save the graph
 plt.savefig("graph.png")
