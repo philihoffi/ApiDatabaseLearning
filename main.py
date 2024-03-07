@@ -80,7 +80,7 @@ while api_url != None:
         break
 
     counter += 1
-    if counter > 1:
+    if counter > 7:
         break
 
 print("start inserting")
