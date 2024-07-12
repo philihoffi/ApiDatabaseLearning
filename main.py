@@ -8,8 +8,16 @@ from threading import Lock
 import time
 
 # log file run in log file which appends the current date and time
-write_log = open("log.txt", "a")
 start_time = datetime.now()
+if not os.path.exists("log"):
+    os.makedirs("log")
+
+write_log = None
+if not os.path.exists("log/"+start_time.strftime("%m%Y")+"_log.txt"):
+    write_log = open("log/"+start_time.strftime("%m%Y")+"_log.txt", "w")
+else:
+    write_log = open("log/"+start_time.strftime("%m%Y")+"_log.txt", "a")
+
 write_log.write("\nstart:" + start_time.strftime("%d/%m/%Y %H:%M:%S") + "\n")
 
 # read json file
@@ -78,7 +86,7 @@ while api_url is not None:
 
     api_url = data.get('nextPage') if data else None
     counter += 1
-    if counter > 15:
+    if counter > 4:
         break
 
 print("start inserting")
